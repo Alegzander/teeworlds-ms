@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+import getopt
+import sys
+import subprocess
+
+logfile = '/var/log/teeworlds.log'
+pidfile = '/var/run/teeworlds.pid'
+confFile = '/etc/teeworlds.conf'
+
+def usage():
+    print 'Daemon for handling teeworlds-server'
+    print 'Usage: %r [-c config-file] [-p pidfile]' % sys.argv[0]
+    print 'Options:'
+    print '\t-c --config-file <path to config>\tPath to configuration file for teeworlds-server. Default value: /etc/teeworlds.conf'
+    print '\t-p --pidfile <path to pid>\t\tPath to store pid file. Default value: /var/run/teeworlds.pid'
+    print '\t-l --log <logfile>\t\t\tSet log file location. Default value: /var/log/teeworlds.log'
+
+try:
+    opts, args = getopt.getopt(sys.argv[1:], "hp:c:u:l:", ['help', 'pidfile=', 'config-file=', 'uid=', 'log='])
+except getopt.GetoptError as err:
+    print 'Error: %r \n' % str(err)
+    usage()
+
+for option, value in opts:
+    if option in ('-c', '--config-file'):
+        confFile = value
+    elif option in ('-l', '--log'):
+        logfile = value
+    elif option in ('-p', '--pidfile'):
+        pidfile = value
+
+daemon = subprocess.Popen(['/usr/games/teeworlds-server', 'exec', confFile], stdout=file(logfile, 'w'))
+
+pidStorage = file(pidfile, 'w')
+pidStorage.write('%d'%daemon.pid)
+pidStorage.close()
