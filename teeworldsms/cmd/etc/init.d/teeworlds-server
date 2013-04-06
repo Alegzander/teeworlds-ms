@@ -52,10 +52,7 @@ for filename in listdir(config_dir):
 
         for option in options:
             if option in allowed_options:
-                if not servers.has_key(server):
-                    servers[server] = {option:config.get(server, option)}
-                else:
-                    servers[server][option] = config.get(server, option)
+                servers.setdefault(server, {})[option] = config.get(server, option)
 
 
 pprint.pprint(servers)
