@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
 
 import ConfigParser
 from bzrlib.osutils import dirname
@@ -8,16 +8,22 @@ from dircache import listdir
 import pprint
 import sys
 import os
-from xdg import Config
 
 argc = len(sys.argv)
-server = None
+allowed_options = ['logfile', 'pidfile', 'config_file']
+servers = {}
+
+def usage():
+    print('Usage: %s start|stop|restart' % sys.argv[0])
 
 if argc > 2:
     server = sys.argv[1]
     action = sys.argv[2]
-else:
+elif argc == 2:
     action = sys.argv[1]
+else:
+    usage()
+    exit(1)
 
 config_dir = os.path.join(os.path.abspath(dirname(dirname(__file__))), 'teeworlds-server.d')
 
@@ -30,14 +36,29 @@ if not os.access(config_dir, os.R_OK):
     exit(11)
 
 for filename in listdir(config_dir):
-    if filename.endswith('.ini'):
+    if not filename.endswith('.ini'):
         continue
 
     filepath = '%s%s%s' % (config_dir, os.path.sep, filename)
 
+    #Reading config file
     config = ConfigParser.ConfigParser()
     config.read(filepath)
-    pprint.pprint(config.sections())
+    server_section = config.sections()
+
+    #Setting server settings based on supplied parameters
+    for server in server_section:
+        options = config.options(server)
+
+        for option in options:
+            if option in allowed_options:
+                if not servers.has_key(server):
+                    servers[server] = {option:config.get(server, option)}
+                else:
+                    servers[server][option] = config.get(server, option)
+
+
+pprint.pprint(servers)
 
 def usage():
     print 'Usage'
