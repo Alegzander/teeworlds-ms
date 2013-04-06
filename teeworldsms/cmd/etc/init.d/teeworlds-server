@@ -72,6 +72,7 @@ def main():
                 try:
                     os.kill(pid, 15)
                     print ('Stopping %s: [success]' % server)
+                    os.remove(current_server['pidfile'])
                 except OSError as error:
                     print ('Stopping %s: %s [fail]' % (server, error))
 
