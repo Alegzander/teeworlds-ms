@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+import ConfigParser
+from bzrlib.osutils import dirname
+from dircache import listdir
+import pprint
+import sys
+import os
+from xdg import Config
+
+argc = len(sys.argv)
+server = None
+
+if argc > 2:
+    server = sys.argv[1]
+    action = sys.argv[2]
+else:
+    action = sys.argv[1]
+
+config_dir = os.path.abspath(dirname(dirname(__file__)))+os.path.sep+'teeworlds-server.d'
+
+if os.path.exists(config_dir) == False:
+    print('%s does not exist.' % config_dir)
+    exit(10)
+
+if os.access(config_dir, os.R_OK) == False:
+    print('%s is not available for reading.' % config_dir)
+    exit(11)
+
+for filename in listdir(config_dir):
+    if filename[-4:] != '.ini':
+        continue
+
+    filepath = '%s%s%s' % (config_dir, os.path.sep, filename)
+
+    config = ConfigParser.ConfigParser()
+    config.read(filepath)
+    pprint.pprint(config.sections())
+
+def usage():
+    print 'Usage'
+
+if action == 'start':
+    print 'start'
+elif action == 'stop':
+    print 'stop'
+elif action == 'restart':
+    print 'restart'
+else:
+    usage()

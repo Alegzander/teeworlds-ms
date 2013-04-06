@@ -2,6 +2,7 @@
 from bzrlib.osutils import dirname
 import getopt
 import os
+import shlex
 import sys
 import subprocess
 
@@ -47,7 +48,7 @@ for directory in [dirname(logfile), dirname(confFile), dirname(pidfile)]:
         exit(20)
     elif os.access(directory, os.W_OK) == False:
         print '%r is not writable.' % directory
-        exit(20)
+        exit(25)
 
 try:
     pidStorage = file(pidfile, 'r')
@@ -55,15 +56,17 @@ try:
     pidStorage.close()
 
     if check_pid(int(pid)) == False:
+        os.remove(pidfile)
         raise IOError()
     else:
-        os.remove(pidfile)
         print '\nServer is already running'
 except IOError as error:
-    daemon = subprocess.Popen(['/usr/games/teeworlds-server', '"exec %s"' % confFile], stdout=file(logfile, 'w'))
+    command = '/usr/games/teeworlds-server "exec %s"' % confFile
+    daemon = subprocess.Popen(shlex.split(command), stdout=file(logfile, 'w'))
 
     if daemon.returncode != None and daemon.returncode != 0:
         print '\nCould not start server'
+        exit(30)
 
     pidStorage = file(pidfile, 'w')
     pidStorage.write('%d'%daemon.pid)
