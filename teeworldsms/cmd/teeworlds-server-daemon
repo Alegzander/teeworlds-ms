@@ -62,7 +62,7 @@ try:
 except IOError as error:
     daemon = subprocess.Popen(['/usr/games/teeworlds-server', '"exec %s"' % confFile], stdout=file(logfile, 'w'))
 
-    if daemon.returncode != 0:
+    if daemon.returncode != None and daemon.returncode != 0:
         print '\nCould not start server'
 
     pidStorage = file(pidfile, 'w')
