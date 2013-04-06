@@ -107,6 +107,7 @@ def main():
         config = ConfigParser.ConfigParser()
         config.read(filepath)
         server_section = config.sections()
+
         #Some sort of per server control
         if server_name != None and server_name not in server_section:
             continue
