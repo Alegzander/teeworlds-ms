@@ -79,9 +79,10 @@ def main():
 
 
     if argc > 2:
-        server = sys.argv[1]
+        server_name = sys.argv[1]
         action = sys.argv[2]
     elif argc == 2:
+        server_name = None
         action = sys.argv[1]
     else:
         usage()
@@ -106,6 +107,9 @@ def main():
         config = ConfigParser.ConfigParser()
         config.read(filepath)
         server_section = config.sections()
+        #Some sort of per server control
+        if server_name != None and server_name not in server_section:
+            continue
 
         #Setting server settings based on supplied parameters
         for server in server_section:
