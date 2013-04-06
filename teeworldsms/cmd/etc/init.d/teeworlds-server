@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+if __name__ == '__main__':
+    main()
+
 import ConfigParser
 from bzrlib.osutils import dirname
 from dircache import listdir
@@ -18,16 +21,16 @@ else:
 
 config_dir = os.path.abspath(dirname(dirname(__file__)))+os.path.sep+'teeworlds-server.d'
 
-if os.path.exists(config_dir) == False:
+if not os.path.exists(config_dir):
     print('%s does not exist.' % config_dir)
     exit(10)
 
-if os.access(config_dir, os.R_OK) == False:
+if not os.access(config_dir, os.R_OK):
     print('%s is not available for reading.' % config_dir)
     exit(11)
 
 for filename in listdir(config_dir):
-    if filename[-4:] != '.ini':
+    if filename.endswith('.ini'):
         continue
 
     filepath = '%s%s%s' % (config_dir, os.path.sep, filename)
