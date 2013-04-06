@@ -2,16 +2,81 @@
 import ConfigParser
 from bzrlib.osutils import dirname
 from dircache import listdir
+import shlex
+import subprocess
 import sys
 import os
+from time import sleep
+
 
 def main():
     argc = len(sys.argv)
+    basepath = os.path.abspath(dirname(dirname(dirname(__file__))))
+    daemon = os.path.join(basepath, 'usr', 'games', 'teeworlds-server-daemon')
+    config_dir = os.path.join(basepath, 'etc', 'teeworlds-server.d')
+    default_options = [
+        os.path.join(basepath, 'var', 'log', 'teeworlds', 'teeworlds.log'),
+        os.path.join(basepath, 'var', 'run', 'teeworlds', 'teeworlds.pid'),
+        os.path.join(basepath, 'etc', 'teeworlds', 'teeworlds.conf')
+    ]
     allowed_options = ['logfile', 'pidfile', 'config_file']
     servers = {}
 
     def usage():
         print('Usage: %s start|stop|restart' % sys.argv[0])
+
+    def start(servers):
+        for server in servers.keys():
+            current_server = servers[server]
+            success = True
+
+            #For simplicity putting values into variables
+            logfile = current_server['logfile']
+            pidfile = current_server['pidfile']
+            config = current_server['config_file']
+
+            command = '%s -l %s -p %s -c %s' % (daemon, logfile, pidfile, config)
+            service = subprocess.Popen(shlex.split(command))
+
+            sleep(1)
+
+            if not os.path.exists(pidfile):
+                success = False
+            else:
+                pidfile = file(pidfile, 'r')
+                pid = int(pidfile.read())
+
+                try:
+                    os.kill(pid, 0)
+                except OSError:
+                    success = False
+
+            if success:
+                print ('%s: [success]' % server)
+            else:
+                print ('%s: [fail]' % server)
+
+
+    def stop (servers):
+        for server in servers.keys():
+            current_server = servers[server]
+            success = True
+
+            if not os.path.exists(current_server['pidfile']):
+                success = False
+            elif not os.access(current_server['pidfile'], os.R_OK):
+                success = False
+            else:
+                pidfile = file(current_server['pidfile'], 'r')
+                pid = int(pidfile.read())
+
+                try:
+                    os.kill(pid, 15)
+                    print ('Stopping %s: [success]' % server)
+                except OSError as error:
+                    print ('Stopping %s: %s [fail]' % (server, error))
+
+
 
     if argc > 2:
         server = sys.argv[1]
@@ -21,8 +86,6 @@ def main():
     else:
         usage()
         exit(1)
-
-    config_dir = os.path.join(os.path.abspath(dirname(dirname(__file__))), 'teeworlds-server.d')
 
     if not os.path.exists(config_dir):
         print('%s does not exist.' % config_dir)
@@ -52,14 +115,27 @@ def main():
                 if option in allowed_options:
                     servers.setdefault(server, {})[option] = str(config.get(server, option)).replace('"', '')
 
+            current_server = servers[server]
+
+            #Agregating parameters
+            for i in range(0, len(allowed_options)):
+                current_option = allowed_options[i]
+                if current_option not in current_server:
+                    current_server[current_option] = default_options[i]
+                elif not current_option.startswith('/'):
+                    current_server[current_option] = os.path.join(dirname(default_options[i]), current_server[current_option])
+
     if action == 'start':
-        print 'start'
+        start(servers)
     elif action == 'stop':
-        print 'stop'
+        stop(servers)
     elif action == 'restart':
-        print 'restart'
+        stop(servers)
+        sleep(1)
+        start(servers)
     else:
         usage()
+        exit(1)
 
 if __name__ == '__main__':
     main()
