@@ -1,5 +1,7 @@
 #!/usr/bin/env python
+from bzrlib.osutils import dirname
 import getopt
+import os
 import sys
 import subprocess
 
@@ -15,12 +17,21 @@ def usage():
     print '\t-p --pidfile <path to pid>\t\tPath to store pid file. Default value: /var/run/teeworlds.pid'
     print '\t-l --log <logfile>\t\t\tSet log file location. Default value: /var/log/teeworlds.log'
 
+def check_pid(pid):
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    else:
+        return True
+
 try:
     opts, args = getopt.getopt(sys.argv[1:], "hp:c:u:l:", ['help', 'pidfile=', 'config-file=', 'uid=', 'log='])
 except getopt.GetoptError as err:
     print 'Error: %r \n' % str(err)
     usage()
 
+#Reading supplied options
 for option, value in opts:
     if option in ('-c', '--config-file'):
         confFile = value
@@ -29,8 +40,31 @@ for option, value in opts:
     elif option in ('-p', '--pidfile'):
         pidfile = value
 
-daemon = subprocess.Popen(['/usr/games/teeworlds-server', 'exec', confFile], stdout=file(logfile, 'w'))
+#Some checks
+for directory in [dirname(logfile), dirname(confFile), dirname(pidfile)]:
+    if os.path.exists(directory) == False:
+        print '%r does not exist.' % directory
+        exit(20)
+    elif os.access(directory, os.W_OK) == False:
+        print '%r is not writable.' % directory
+        exit(20)
 
-pidStorage = file(pidfile, 'w')
-pidStorage.write('%d'%daemon.pid)
-pidStorage.close()
+try:
+    pidStorage = file(pidfile, 'r')
+    pid = pidStorage.read()
+    pidStorage.close()
+
+    if check_pid(int(pid)) == False:
+        raise IOError()
+    else:
+        os.remove(pidfile)
+        print '\nServer is already running'
+except IOError as error:
+    daemon = subprocess.Popen(['/usr/games/teeworlds-server', '"exec %s"' % confFile], stdout=file(logfile, 'w'))
+
+    if daemon.returncode != 0:
+        print '\nCould not start server'
+
+    pidStorage = file(pidfile, 'w')
+    pidStorage.write('%d'%daemon.pid)
+    pidStorage.close()
