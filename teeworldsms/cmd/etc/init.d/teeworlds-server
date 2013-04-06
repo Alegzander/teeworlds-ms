@@ -60,12 +60,11 @@ def main():
     def stop (servers):
         for server in servers.keys():
             current_server = servers[server]
-            success = True
 
             if not os.path.exists(current_server['pidfile']):
-                success = False
+                print ('Stopping %s: pid file does not exist. [fail]' % server)
             elif not os.access(current_server['pidfile'], os.R_OK):
-                success = False
+                print ('Stopping %s: pid file is not readable [fail]' % server)
             else:
                 pidfile = file(current_server['pidfile'], 'r')
                 pid = int(pidfile.read())
