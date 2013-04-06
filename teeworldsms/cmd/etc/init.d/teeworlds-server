@@ -19,7 +19,7 @@ if argc > 2:
 else:
     action = sys.argv[1]
 
-config_dir = os.path.abspath(dirname(dirname(__file__)))+os.path.sep+'teeworlds-server.d'
+config_dir = os.path.join(os.path.abspath(dirname(dirname(__file__))), 'teeworlds-server.d')
 
 if not os.path.exists(config_dir):
     print('%s does not exist.' % config_dir)

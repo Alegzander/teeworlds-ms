@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+if __name__ == '__main__':
+    main()
+
 from bzrlib.osutils import dirname
 import getopt
 import os
